@@ -24,7 +24,7 @@ import {
     FlatTagGraphNode,
     MinimalTagWithIsTopic,
     DbPlainPostGdocLink,
-    OwidGdocLinkType,
+    ContentGraphLinkType,
     OwidGdoc,
     DbPlainTag,
     TagGraphNode,
@@ -769,7 +769,7 @@ export async function getGrapherLinkTargets(
         `-- sql
         SELECT target
         FROM posts_gdocs_links
-        WHERE linkType = '${OwidGdocLinkType.Grapher}'
+        WHERE linkType = '${ContentGraphLinkType.Grapher}'
         `
     )
 }

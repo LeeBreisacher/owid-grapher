@@ -12,7 +12,7 @@ import {
     OwidGdocMinimalPostInterface,
     LinkedIndicator,
     OwidGdocDataInsightContent,
-    OwidGdocLinkType,
+    ContentGraphLinkType,
     SubNavId,
 } from "@ourworldindata/types"
 import {
@@ -71,7 +71,7 @@ export const useLinkedDocument = (
     let errorMessage: string | undefined = undefined
     let linkedDocument: OwidGdocMinimalPostInterface | undefined = undefined
     const linkType = getLinkType(url)
-    if (linkType !== OwidGdocLinkType.Gdoc) {
+    if (linkType !== ContentGraphLinkType.Gdoc) {
         return { linkedDocument }
     }
 
