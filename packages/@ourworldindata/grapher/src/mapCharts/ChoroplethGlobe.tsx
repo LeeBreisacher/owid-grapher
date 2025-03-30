@@ -26,8 +26,8 @@ import {
 } from "@ourworldindata/utils"
 import { GeoPathRoundingContext } from "./GeoPathRoundingContext"
 import {
-    ChoroplethMapManager,
     ChoroplethSeriesByName,
+    ChoroplethGlobeManager,
     GEO_FEATURES_CLASSNAME,
     GlobeRenderFeature,
     MAP_HOVER_TARGET_RANGE,
@@ -42,6 +42,7 @@ import {
 } from "./MapComponents"
 import { Patterns } from "../core/GrapherConstants"
 import { calculateDistance, detectNearbyFeature, hasFocus } from "./MapHelpers"
+import { GlobeController } from "./GlobeController"
 
 const DEFAULT_GLOBE_SIZE = 500 // defined by d3
 
@@ -50,7 +51,7 @@ const MAX_ZOOM_SCALE = 5
 
 @observer
 export class ChoroplethGlobe extends React.Component<{
-    manager: ChoroplethMapManager
+    manager: ChoroplethGlobeManager
 }> {
     base: React.RefObject<SVGGElement> = React.createRef()
 
@@ -66,12 +67,16 @@ export class ChoroplethGlobe extends React.Component<{
         return isTouchDevice()
     }
 
-    @computed private get manager(): ChoroplethMapManager {
+    @computed private get manager(): ChoroplethGlobeManager {
         return this.props.manager
     }
 
     @computed private get mapConfig(): MapConfig {
         return this.manager.mapConfig
+    }
+
+    @computed private get globeController(): GlobeController {
+        return this.manager.globeController
     }
 
     @computed.struct private get bounds(): Bounds {
@@ -248,13 +253,15 @@ export class ChoroplethGlobe extends React.Component<{
     @action.bound private rotateGlobe(targetCoords: [number, number]): void {
         if (this.rotateFrameId) cancelAnimationFrame(this.rotateFrameId)
         this.rotateFrameId = requestAnimationFrame(() => {
-            this.mapConfig.globe.rotation = [
-                targetCoords[0],
-                // Clamping the latitude to [-90, 90] would allow rotation up to the poles.
-                // However, the panning strategy used doesn't work well around the poles.
-                // That's why we clamp the latitude to a narrower range.
-                clamp(targetCoords[1], -65, 65),
-            ]
+            this.globeController.jumpTo({
+                coords: [
+                    targetCoords[0],
+                    // Clamping the latitude to [-90, 90] would allow rotation up to the poles.
+                    // However, the panning strategy used doesn't work well around the poles.
+                    // That's why we clamp the latitude to a narrower range.
+                    clamp(targetCoords[1], -65, 65),
+                ],
+            })
         })
     }
 
@@ -264,11 +271,8 @@ export class ChoroplethGlobe extends React.Component<{
         this.zoomFrameId = requestAnimationFrame(() => {
             const sensitivity = 0.01
             const newZoom = this.zoomScale * (1 + delta * sensitivity)
-            this.mapConfig.globe.zoom = clamp(
-                newZoom,
-                MIN_ZOOM_SCALE,
-                MAX_ZOOM_SCALE
-            )
+            const clampedZoom = clamp(newZoom, MIN_ZOOM_SCALE, MAX_ZOOM_SCALE)
+            this.globeController.jumpTo({ zoom: clampedZoom })
         })
     }
 
