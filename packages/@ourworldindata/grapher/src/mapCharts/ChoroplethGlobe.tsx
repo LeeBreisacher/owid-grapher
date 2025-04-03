@@ -260,7 +260,7 @@ export class ChoroplethGlobe extends React.Component<{
     }
 
     @computed private get visibleFeatures(): GlobeRenderFeature[] {
-        return this.features.filter((feature) =>
+        return this.featuresInRegion.filter((feature) =>
             this.isFeatureVisibleOnGlobe(feature)
         )
     }
