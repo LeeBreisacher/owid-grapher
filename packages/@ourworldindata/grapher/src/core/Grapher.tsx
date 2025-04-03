@@ -67,6 +67,7 @@ import {
     isTouchDevice,
     isArrayDifferentFromReference,
     countriesByName,
+    last,
 } from "@ourworldindata/utils"
 import {
     MarkdownTextWrap,
@@ -150,6 +151,7 @@ import { TooltipManager } from "../tooltip/TooltipProps"
 
 import { DimensionSlot } from "../chart/DimensionSlot"
 import {
+    getEntityNamesParam,
     getFocusedSeriesNamesParam,
     getSelectedEntityNamesParam,
 } from "./EntityUrlBuilder"
@@ -172,7 +174,10 @@ import { observer } from "mobx-react"
 import "d3-transition"
 import { SourcesModal, SourcesModalManager } from "../modal/SourcesModal"
 import { DataTableManager } from "../dataTable/DataTable"
-import { MapChartManager } from "../mapCharts/MapChartConstants"
+import {
+    GLOBE_COUNTRY_ZOOM,
+    MapChartManager,
+} from "../mapCharts/MapChartConstants"
 import { MapChart } from "../mapCharts/MapChart"
 import { DiscreteBarChartManager } from "../barCharts/DiscreteBarChartConstants"
 import { Command, CommandPalette } from "../controls/CommandPalette"
@@ -702,6 +707,13 @@ export class Grapher
         if (endpointsOnly !== undefined)
             this.compareEndPointsOnly = endpointsOnly === "1" ? true : undefined
 
+        // globe
+        const globe = params.globe
+        if (globe !== undefined) {
+            this.mapConfig.globe.isActive = globe === "1"
+        }
+
+        // region
         const region = params.region
         if (region !== undefined) {
             this.map.region = region as MapRegionName
@@ -713,10 +725,24 @@ export class Grapher
             }
         }
 
+        // map selection
+        const mapSelection = getEntityNamesParam(params.mapCountry)
+        if (mapSelection) {
+            this.mapConfig.selectedCountries.setSelectedEntities(mapSelection)
+
+            // rotate to the country that was selected last
+            const lastEntityName = last(mapSelection)
+            if (lastEntityName) {
+                this.globeController.jumpToCountry(
+                    lastEntityName,
+                    GLOBE_COUNTRY_ZOOM
+                )
+            }
+        }
+
         // selection
-        const selection = getSelectedEntityNamesParam(
-            Url.fromQueryParams(params)
-        )
+        const url = Url.fromQueryParams(params)
+        const selection = getSelectedEntityNamesParam(url)
         if (this.addCountryMode !== EntitySelectionMode.Disabled && selection)
             this.selection.setSelectedEntities(selection)
 
@@ -3495,8 +3521,10 @@ export class Grapher
         this.showSelectionOnlyInDataTable =
             authorsVersion.showSelectionOnlyInDataTable
         this.showNoDataArea = authorsVersion.showNoDataArea
+        this.mapConfig.globe.isActive = authorsVersion.mapConfig.globe.isActive
         this.clearSelection()
         this.clearFocus()
+        this.mapConfig.selectedCountries.clearSelection()
     }
 
     // Todo: come up with a more general pattern?
