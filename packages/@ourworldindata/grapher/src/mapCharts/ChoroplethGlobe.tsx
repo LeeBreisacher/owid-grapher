@@ -348,9 +348,12 @@ export class ChoroplethGlobe extends React.Component<{
         // reset the region if necessary
         this.mapConfig.region = MapRegionName.World
 
-        // rotate to the selected country on the globe and select it
+        // rotate to the selected country on the globe
         void this.globeController.rotateToCountry(feature.id, zoom)
-        this.mapConfig.selectedCountries.selectEntity(feature.id)
+
+        // select the country if allowed
+        if (this.manager.shouldEnableEntitySelectionOnMapTab)
+            this.mapConfig.selectedCountries.selectEntity(feature.id)
     }
 
     @action.bound private onTouchStart(feature: GlobeRenderFeature): void {
