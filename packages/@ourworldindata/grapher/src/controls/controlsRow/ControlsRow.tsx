@@ -9,10 +9,6 @@ import {
     EntitySelectionToggle,
     EntitySelectionManager,
 } from "../EntitySelectionToggle"
-import {
-    MapRegionDropdown,
-    MapRegionDropdownManager,
-} from "../MapRegionDropdown"
 import { SettingsMenu, SettingsMenuManager } from "../SettingsMenu"
 import {
     GRAPHER_FRAME_PADDING_HORIZONTAL,
@@ -27,7 +23,6 @@ import { CloseGlobeViewButton } from "../CloseGlobeViewButton"
 export interface ControlsRowManager
     extends ContentSwitchersManager,
         EntitySelectionManager,
-        MapRegionDropdownManager,
         MapCountryDropdownManager,
         SettingsMenuManager {
     sidePanelBounds?: Bounds
@@ -76,7 +71,6 @@ export class ControlsRow extends Component<{
         return (
             SettingsMenu.shouldShow(this.manager) ||
             EntitySelectionToggle.shouldShow(this.manager) ||
-            MapRegionDropdown.shouldShow(this.manager) ||
             MapCountryDropdown.shouldShow(this.manager) ||
             CloseGlobeViewButton.shouldShow(this.manager) ||
             this.showContentSwitchers
@@ -111,10 +105,6 @@ export class ControlsRow extends Component<{
                     />
 
                     {/* only one of the following will be rendered */}
-                    <MapRegionDropdown
-                        manager={this.manager}
-                        maxWidth={this.availableWidth}
-                    />
                     <MapCountryDropdown
                         manager={this.manager}
                         maxWidth={this.availableWidth}
