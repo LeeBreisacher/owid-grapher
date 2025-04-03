@@ -49,6 +49,7 @@ import {
 } from "../color/ColorScaleBin"
 import {
     ColorSchemeName,
+    InteractionState,
     MapRegionName,
     SeriesName,
 } from "@ourworldindata/types"
@@ -74,7 +75,13 @@ export class MapChart
         ColorScaleManager,
         ChoroplethMapManager
 {
-    @observable focusBracket?: MapBracket
+    /**
+     * The currently hovered map bracket.
+     *
+     * Hovering a map bracket highlights all countries within that bracket on the map.
+     */
+    @observable hoverBracket?: MapBracket
+
     @observable tooltipState = new TooltipState<{ featureId: string }>()
 
     transformTable(table: OwidTable): OwidTable {
@@ -172,11 +179,11 @@ export class MapChart
     }
 
     @action.bound onLegendMouseOver(bracket: MapBracket): void {
-        this.focusBracket = bracket
+        this.hoverBracket = bracket
     }
 
     @action.bound onLegendMouseLeave(): void {
-        this.focusBracket = undefined
+        this.hoverBracket = undefined
     }
 
     @computed get mapConfig(): MapConfig {
@@ -295,6 +302,25 @@ export class MapChart
         return series.value
     }
 
+    private isHovered(featureId: string): boolean {
+        const { hoverFeatureId, hoverBracket } = this
+
+        if (hoverFeatureId === featureId) return true
+        else if (!hoverBracket) return false
+
+        const series = this.choroplethData.get(featureId)
+        if (hoverBracket.contains(series?.value)) return true
+        else return false
+    }
+
+    getHoverState(featureId: string): InteractionState {
+        const isHovered = this.isHovered(featureId)
+        return {
+            active: isHovered,
+            background: !!this.hoverBracket && !isHovered,
+        }
+    }
+
     @computed get fontSize(): number {
         return this.manager.fontSize ?? BASE_FONT_SIZE
     }
@@ -360,11 +386,11 @@ export class MapChart
         return this.categoricalLegendData.length > 1
     }
 
-    @computed get numericFocusBracket(): ColorScaleBin | undefined {
-        const { focusBracket, hoverValue } = this
+    @computed get numericHoverBracket(): ColorScaleBin | undefined {
+        const { hoverBracket, hoverValue } = this
         const { numericLegendData } = this
 
-        if (focusBracket) return focusBracket
+        if (hoverBracket) return hoverBracket
 
         if (hoverValue !== undefined)
             return numericLegendData.find((bin) => bin.contains(hoverValue))
@@ -372,11 +398,12 @@ export class MapChart
         return undefined
     }
 
-    @computed get categoricalFocusBracket(): CategoricalBin | undefined {
-        const { focusBracket, hoverValue } = this
+    @computed get categoricalHoverBracket(): CategoricalBin | undefined {
+        const { hoverBracket, hoverValue } = this
         const { categoricalLegendData } = this
-        if (focusBracket && focusBracket instanceof CategoricalBin)
-            return focusBracket
+
+        if (hoverBracket && hoverBracket instanceof CategoricalBin)
+            return hoverBracket
 
         if (hoverValue !== undefined)
             return categoricalLegendData.find((bin) => bin.contains(hoverValue))
