@@ -189,6 +189,7 @@ export class MapChart
     componentWillUnmount(): void {
         this.onMapMouseLeave()
         this.onLegendMouseLeave()
+        document.removeEventListener("keydown", this.onDocumentKeyDown)
     }
 
     @action.bound onLegendMouseOver(bracket: MapBracket): void {
@@ -268,6 +269,13 @@ export class MapChart
     defaultBaseColorScheme = ColorSchemeName.BuGn
     hasNoDataBin = true
 
+    @action.bound onDocumentKeyDown(e: KeyboardEvent): void {
+        // hide the globe on hitting the Escape key
+        if (e.key === "Escape" && this.mapConfig.globe.isActive) {
+            this.globeController.hideGlobe()
+        }
+    }
+
     componentDidMount(): void {
         if (!this.manager.disableIntroAnimation) {
             select(this.base.current)
@@ -287,6 +295,8 @@ export class MapChart
                 })
         }
         exposeInstanceOnWindow(this)
+
+        document.addEventListener("keydown", this.onDocumentKeyDown)
     }
 
     @computed get legendData(): ColorScaleBin[] {
