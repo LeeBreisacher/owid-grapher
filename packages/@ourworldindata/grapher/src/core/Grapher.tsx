@@ -3068,6 +3068,10 @@ export class Grapher
             return <StaticCaptionedChart manager={this} />
         }
 
+        const entitySelectorArray = this.isOnMapTab
+            ? this.mapConfig.selectedCountries
+            : this.selection
+
         return (
             <>
                 {/* captioned chart and entity selector */}
@@ -3075,7 +3079,10 @@ export class Grapher
                     <CaptionedChart manager={this} />
                     {this.sidePanelBounds && (
                         <SidePanel bounds={this.sidePanelBounds}>
-                            <EntitySelector manager={this} />
+                            <EntitySelector
+                                manager={this}
+                                selection={entitySelectorArray}
+                            />
                         </SidePanel>
                     )}
                 </div>
@@ -3097,7 +3104,11 @@ export class Grapher
                             !this.isEntitySelectorModalOrDrawerOpen
                     }}
                 >
-                    <EntitySelector manager={this} autoFocus={true} />
+                    <EntitySelector
+                        manager={this}
+                        selection={entitySelectorArray}
+                        autoFocus={true}
+                    />
                 </SlideInDrawer>
 
                 {/* tooltip: either pin to the bottom or render into the chart area */}
@@ -3267,7 +3278,7 @@ export class Grapher
     @computed get shouldShowEntitySelectorOnMapTab(): boolean {
         // only show the entity selector on the map tab if it's
         // rendered into the side panel or the drawer
-        return this.showEntitySelectorAs !== GrapherWindowType.modal
+        return this.shouldShowEntitySelectorAs !== GrapherWindowType.modal
     }
 
     // Binds chart properties to global window title and URL. This should only
@@ -3774,7 +3785,7 @@ export class Grapher
         )
     }
 
-    @computed get showEntitySelectorAs(): GrapherWindowType {
+    @computed get shouldShowEntitySelectorAs(): GrapherWindowType {
         if (
             this.frameBounds.width > 940 &&
             // don't use the panel if the grapher is embedded
@@ -3790,35 +3801,58 @@ export class Grapher
     }
 
     @computed get isEntitySelectorPanelActive(): boolean {
+        if (this.hideEntityControls) return false
+
+        const shouldShowPanel =
+            this.shouldShowEntitySelectorAs === GrapherWindowType.panel
+
+        if (
+            this.isOnMapTab &&
+            this.shouldShowEntitySelectorOnMapTab &&
+            shouldShowPanel
+        )
+            return true
+
         return (
-            !this.hideEntityControls &&
-            this.canChangeAddOrHighlightEntities &&
             this.isOnChartTab &&
-            this.showEntitySelectorAs === GrapherWindowType.panel
+            this.canChangeAddOrHighlightEntities &&
+            shouldShowPanel
         )
     }
 
     @computed get showEntitySelectionToggle(): boolean {
+        if (this.hideEntityControls) return false
+
+        const shouldShowDrawer =
+            this.shouldShowEntitySelectorAs === GrapherWindowType.drawer
+        const shouldShowModal =
+            this.shouldShowEntitySelectorAs === GrapherWindowType.modal
+
+        if (
+            this.isOnMapTab &&
+            this.shouldShowEntitySelectorOnMapTab &&
+            shouldShowDrawer
+        )
+            return true
+
         return (
-            !this.hideEntityControls &&
-            this.canChangeAddOrHighlightEntities &&
             this.isOnChartTab &&
-            (this.showEntitySelectorAs === GrapherWindowType.modal ||
-                this.showEntitySelectorAs === GrapherWindowType.drawer)
+            this.canChangeAddOrHighlightEntities &&
+            (shouldShowModal || shouldShowDrawer)
         )
     }
 
     @computed get isEntitySelectorModalOpen(): boolean {
         return (
             this.isEntitySelectorModalOrDrawerOpen &&
-            this.showEntitySelectorAs === GrapherWindowType.modal
+            this.shouldShowEntitySelectorAs === GrapherWindowType.modal
         )
     }
 
     @computed get isEntitySelectorDrawerOpen(): boolean {
         return (
             this.isEntitySelectorModalOrDrawerOpen &&
-            this.showEntitySelectorAs === GrapherWindowType.drawer
+            this.shouldShowEntitySelectorAs === GrapherWindowType.drawer
         )
     }
 
