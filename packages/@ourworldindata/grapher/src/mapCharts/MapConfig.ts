@@ -13,8 +13,8 @@ import {
     NoUndefinedValues,
     ToleranceStrategy,
 } from "@ourworldindata/utils"
-import { DEFAULT_VIEWPORT } from "./MapChartConstants"
 import { SelectionArray } from "../selection/SelectionArray"
+import { DEFAULT_GLOBE_ROTATION } from "./MapChartConstants"
 
 export interface GlobeConfig {
     isActive: boolean
@@ -39,7 +39,7 @@ class MapConfigDefaults {
 
     @observable globe: GlobeConfig = {
         isActive: false,
-        rotation: DEFAULT_VIEWPORT.rotation,
+        rotation: DEFAULT_GLOBE_ROTATION,
         zoom: 1,
     }
 
