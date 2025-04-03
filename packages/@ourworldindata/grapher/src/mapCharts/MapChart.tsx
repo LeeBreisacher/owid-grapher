@@ -225,7 +225,6 @@ export class MapChart
                     value,
                     isSelected: false,
                     color,
-                    highlightFillColor: color,
                 }
             })
             .filter(isPresent)
