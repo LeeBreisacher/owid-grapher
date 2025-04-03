@@ -705,7 +705,15 @@ export class Grapher
             this.compareEndPointsOnly = endpointsOnly === "1" ? true : undefined
 
         const region = params.region
-        if (region !== undefined) this.map.region = region as MapRegionName
+        if (region !== undefined) {
+            this.map.region = region as MapRegionName
+
+            // show regions on the globe
+            if (this.map.region !== MapRegionName.World) {
+                this.globeController.jumpToRegion(this.map.region)
+                this.globeController.showGlobe()
+            }
+        }
 
         // selection
         const selection = getSelectedEntityNamesParam(
@@ -3740,6 +3748,7 @@ export class Grapher
         if (this.isOnMapTab) {
             const country = countriesByName()[entityName]
             if (country.isMappable) {
+                this.mapConfig.region = MapRegionName.World
                 this.globeController.focusOnCountry(country.name)
             }
         }
