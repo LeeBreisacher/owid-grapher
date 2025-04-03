@@ -1,6 +1,6 @@
 import * as React from "react"
 import { observer } from "mobx-react"
-import { computed, action, reaction } from "mobx"
+import { computed, action, reaction, observable } from "mobx"
 import cx from "classnames"
 import a from "indefinite"
 import {
@@ -185,10 +185,12 @@ export class EntitySelector extends React.Component<{
     searchField: React.RefObject<HTMLInputElement> = React.createRef()
     contentRef: React.RefObject<HTMLDivElement> = React.createRef()
 
-    private defaultSortConfig = {
+    private entityNameSortConfig = {
         slug: this.table.entityNameSlug,
         order: SortOrder.asc,
     }
+
+    @observable private defaultSortConfig?: SortConfig
 
     componentDidMount(): void {
         void this.populateLocalEntities()
@@ -204,6 +206,12 @@ export class EntitySelector extends React.Component<{
                     this.scrollableContainer.current.scrollTop = 0
             }
         )
+    }
+
+    componentDidUpdate(): void {
+        // set the default sort column on the first update instead of on mount
+        // to ensure that computed data is available
+        this.setDefaultSortConfig()
     }
 
     componentWillUnmount(): void {
@@ -235,6 +243,28 @@ export class EntitySelector extends React.Component<{
         this.manager.entitySelectorState = {
             ...this.manager.entitySelectorState,
             ...correctedState,
+        }
+    }
+
+    @action.bound private setDefaultSortConfig(): void {
+        // we only need to do this once
+        if (this.defaultSortConfig) return
+
+        // default to sorting by the first chart column on the map tab
+        if (this.manager.isOnMapTab && this.numericalChartColumns[0]) {
+            const { slug } = this.numericalChartColumns[0]
+
+            // make sure the default column is loaded
+            if (!this.interpolatedSortColumnsBySlug[slug]) {
+                const interpolatedColumn = this.table
+                    .interpolateColumnWithTolerance(slug)
+                    .get(slug)
+                this.setInterpolatedSortColumn(interpolatedColumn)
+            }
+
+            this.defaultSortConfig = { slug, order: SortOrder.desc }
+        } else {
+            this.defaultSortConfig = this.entityNameSortConfig
         }
     }
 
@@ -372,7 +402,8 @@ export class EntitySelector extends React.Component<{
     @computed private get sortConfig(): SortConfig {
         return (
             this.manager.entitySelectorState.sortConfig ??
-            this.defaultSortConfig
+            this.defaultSortConfig ??
+            this.entityNameSortConfig
         )
     }
 
