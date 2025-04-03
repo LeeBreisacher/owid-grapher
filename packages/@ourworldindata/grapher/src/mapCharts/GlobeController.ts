@@ -5,7 +5,11 @@ import { EntityName, MapRegionName } from "@ourworldindata/types"
 import { delay } from "@ourworldindata/utils"
 import { GlobeConfig, MapConfig } from "./MapConfig"
 import { getFeaturesForGlobe } from "./GeoFeatures"
-import { DEFAULT_VIEWPORT, MAP_VIEWPORTS } from "./MapChartConstants"
+import {
+    DEFAULT_VIEWPORT,
+    GLOBE_COUNTRY_ZOOM,
+    MAP_VIEWPORTS,
+} from "./MapChartConstants"
 
 const geoFeaturesById = new Map(getFeaturesForGlobe().map((f) => [f.id, f]))
 
@@ -44,6 +48,11 @@ export class GlobeController {
         this.globeConfig.isActive = true
     }
 
+    hideGlobe(): void {
+        this.globeConfig.isActive = false
+        this.resetGlobe()
+    }
+
     jumpTo({
         coords,
         zoom,
@@ -56,6 +65,24 @@ export class GlobeController {
     }
 
     focusOnCountry(country: EntityName): void {
+        if (this.globeConfig.isActive) {
+            // if we're on the globe view, focus the country and rotate to it
+            this.setCountryFocus(country)
+            this.rotateToCountry(country)
+        } else {
+            // switch to the globe view first. before switching to the globe,
+            // jump to the country's offset position so that rotating to it
+            // is predictable
+            this.jumpToCountryOffset(country)
+            this.showGlobe()
+
+            // then focus the country and rotate to it
+            this.setCountryFocus(country)
+            this.rotateToCountry(country, GLOBE_COUNTRY_ZOOM)
+        }
+    }
+
+    private setCountryFocus(country: EntityName): void {
         this.globeConfig.focusCountry = country
     }
 
